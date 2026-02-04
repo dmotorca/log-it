@@ -1,65 +1,67 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 type JournalEntry = {
-  id: string
-  created_at: string
-  date: string
-  title: string | null
-  content: string
-  is_public: boolean
-}
+  id: string;
+  created_at: string;
+  date: string;
+  title: string | null;
+  content: string;
+  is_public: boolean;
+};
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
-  const [entries, setEntries] = useState<JournalEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const router = useRouter()
+  const [user, setUser] = useState<any>(null);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    checkUser()
-  }, [])
+    checkUser();
+  }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
-      router.push('/login')
-      return
+      router.push('/login');
+      return;
     }
 
-    setUser(user)
-    fetchEntries(user.id)
-  }
+    setUser(user);
+    fetchEntries(user.id);
+  };
 
   const fetchEntries = async (userId: string) => {
-    setLoading(true)
+    setLoading(true);
     const { data, error } = await supabase
       .from('journal_entries')
       .select('*')
       .eq('user_id', userId)
-      .order('date', { ascending: false })
+      .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching entries:', error)
+      console.error('Error fetching entries:', error);
     } else {
-      setEntries(data || [])
+      setEntries(data || []);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleCreateEntry = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || !content.trim()) return
+    e.preventDefault();
+    if (!user || !content.trim()) return;
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     const { data, error } = await supabase
       .from('journal_entries')
@@ -72,52 +74,52 @@ export default function DashboardPage() {
           date: new Date().toISOString().split('T')[0], // Today's date
         },
       ])
-      .select()
+      .select();
 
     if (error) {
-      console.error('Error creating entry:', error)
-      alert('Failed to create entry')
+      console.error('Error creating entry:', error);
+      alert('Failed to create entry');
     } else {
       // Add new entry to the list
       if (data) {
-        setEntries([data[0], ...entries])
+        setEntries([data[0], ...entries]);
       }
       // Clear form
-      setTitle('')
-      setContent('')
-      setIsPublic(false)
+      setTitle('');
+      setContent('');
+      setIsPublic(false);
     }
 
-    setSubmitting(false)
-  }
+    setSubmitting(false);
+  };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this entry?')) return
+    if (!confirm('Are you sure you want to delete this entry?')) return;
 
     const { error } = await supabase
       .from('journal_entries')
       .delete()
-      .eq('id', id)
+      .eq('id', id);
 
     if (error) {
-      console.error('Error deleting entry:', error)
-      alert('Failed to delete entry')
+      console.error('Error deleting entry:', error);
+      alert('Failed to delete entry');
     } else {
-      setEntries(entries.filter(entry => entry.id !== id))
+      setEntries(entries.filter((entry) => entry.id !== id));
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -141,7 +143,10 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold text-black mb-4">New Entry</h2>
           <form onSubmit={handleCreateEntry} className="space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Title (optional)
               </label>
               <input
@@ -156,7 +161,10 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="content"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Content
               </label>
               <textarea
@@ -179,7 +187,10 @@ export default function DashboardPage() {
                 onChange={(e) => setIsPublic(e.target.checked)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="is_public" className="ml-2 block text-sm text-gray-700">
+              <label
+                htmlFor="is_public"
+                className="ml-2 block text-sm text-gray-700"
+              >
                 Check this to make the entry pulbic
               </label>
             </div>
@@ -196,8 +207,10 @@ export default function DashboardPage() {
 
         {/* Entries List */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-black">Your Entries ({entries.length})</h2>
-          
+          <h2 className="text-xl font-semibold text-black">
+            Your Entries ({entries.length})
+          </h2>
+
           {entries.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
               No entries yet. Create your first one above!
@@ -208,12 +221,14 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     {entry.title && (
-                      <h3 className="text-lg font-semibold text-black kmb-1 mb-1">{entry.title}</h3>
+                      <h3 className="text-lg font-semibold text-black kmb-1 mb-1">
+                        {entry.title}
+                      </h3>
                     )}
                     <p className="text-sm text-gray-500">
-                        Posted On:{' '} {/* Added space after the colon */}
-                        {/* Creates the posted date */ }
-                      {new Date(entry.date).toLocaleDateString('en-US', {  
+                      Posted On: {/* Added space after the colon */}
+                      {/* Creates the posted date */}
+                      {new Date(entry.date).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -222,9 +237,13 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {entry.is_public && (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    {entry.is_public === true ? (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-bold">
                         Public
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded font-bold">
+                        Private
                       </span>
                     )}
                     <button
@@ -235,12 +254,14 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 </div>
-                <p className="text-gray-700 whitespace-pre-wrap">{entry.content}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {entry.content}
+                </p>
               </div>
             ))
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }
